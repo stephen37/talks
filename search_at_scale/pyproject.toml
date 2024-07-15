@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "search-at-scale"
+version = "0.1.0"
+description = ""
+authors = ["stephen37 <stephen.batifol@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+jupyterlab = "^4.2.3"
+datasets = "^2.20.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
