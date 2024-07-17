@@ -11,6 +11,9 @@ jupyterlab = "^4.2.3"
 datasets = "^2.20.0"
 
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
