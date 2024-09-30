@@ -1,15 +1,7 @@
 import os
+from pymilvus import MilvusClient
 from datasets import load_dataset
-from pymilvus import (
-    connections,
-    FieldSchema,
-    CollectionSchema,
-    DataType,
-    Collection,
-    utility,
-)
 from tqdm import tqdm
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,55 +11,50 @@ ZILLIZ_TOKEN = os.getenv("TOKEN")
 
 
 def create_index_coll_milvus():
-    # Connect to Milvus
-    connections.connect(
-        db_name="cohere_wiki", uri=ZILLIZ_URI, port="19530", token=ZILLIZ_TOKEN
-    )
-
+    # Create MilvusClient instance
+    # client = MilvusClient(uri=ZILLIZ_URI, token=ZILLIZ_TOKEN)
+    client = MilvusClient(uri="http://localhost:19530")
     # Define the schema for the collection
     embedding_dim = 1024
-    fields = [
-        FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
-        FieldSchema(name="text_vector", dtype=DataType.FLOAT_VECTOR, dim=embedding_dim),
-        FieldSchema(name="title", dtype=DataType.VARCHAR, max_length=5000),
-        FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=5000),
-    ]
-
-    schema = CollectionSchema(fields, "Schema for text and paragraph embeddings")
+    collection_name = "test_collection"
 
     # Create the collection if it doesn't exist
-    collection_name = "cohere_embeddings"
-    if utility.has_collection(collection_name):
-        collection = Collection(name=collection_name)
+    if not client.has_collection(collection_name):
+        from pymilvus import CollectionSchema, FieldSchema, DataType
 
-    collection = Collection(name=collection_name, schema=schema)
+        schema = CollectionSchema([
+            FieldSchema("id", DataType.INT64, is_primary=True, auto_id=True),
+            FieldSchema("text_vector", DataType.FLOAT_VECTOR, dim=embedding_dim),
+            FieldSchema("title", DataType.VARCHAR, max_length=5000),
+            FieldSchema("text", DataType.VARCHAR, max_length=5000)
+        ])
+        client.create_collection(collection_name=collection_name, schema=schema)
 
-    # Define index parameters
-    index_params = [
-        {
-            "field_name": "text_vector",
-            "index_type": "HNSW",
-            "metric_type": "COSINE",
-        }
-    ]
-
-    # Create indexes
-    for index_param in index_params:
-        collection.create_index(index_param["field_name"], index_param)
+    # # Define and create index
+    # index_params = {
+    #     "metric_type": "COSINE",
+    #     "index_type": "HNSW",
+    #     "params": {"M": 8, "efConstruction": 64},
+    # }
+    # client.create_index(
+    #     collection_name=collection_name,
+    #     field_name="text_vector",
+    #     index_params=index_params,
+    # )
 
     # Load the collection
-    collection.load()
+    # client.load_collection(collection_name=collection_name)
 
     print("Collection created and indexes set up successfully!")
-    return collection
+    return client, collection_name
 
 
-def insert_batch(collection, batch_data):
-    collection.insert(batch_data)
+def insert_batch(client, collection_name, batch_data):
+    client.insert(collection_name=collection_name, data=batch_data)
     batch_data.clear()
 
 
-def insert_data(collection):
+def insert_data(client, collection_name):
     batch_size = 1000  # Adjust the batch size as needed
     batch_data = []
 
@@ -85,11 +72,11 @@ def insert_data(collection):
 
         batch_data.append({"title": title, "text_vector": emb, "text": text})
         if len(batch_data) >= batch_size:
-            insert_batch(collection, batch_data)
+            insert_batch(client, collection_name, batch_data)
     if batch_data:
-        insert_batch(collection, batch_data)
+        insert_batch(client, collection_name, batch_data)
 
 
 if __name__ == "__main__":
-    collection = create_index_coll_milvus()
-    insert_data(collection=collection)
+    client, collection_name = create_index_coll_milvus()
+    # insert_data(client=client, collection_name=collection_name)
