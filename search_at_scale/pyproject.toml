@@ -9,6 +9,8 @@ readme = "README.md"
 python = "^3.11"
 jupyterlab = "^4.2.3"
 datasets = "^2.20.0"
+s3fs = "^2024.6.1"
+pymilvus = "^2.4.5"
 
 
 [tool.poetry.group.dev.dependencies]
