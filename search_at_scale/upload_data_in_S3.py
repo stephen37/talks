@@ -8,6 +8,10 @@ import os
 
 load_dotenv()
 
+from dotenv import load_dotenv
+load_dotenv()
+import os
+
 # Configure S3 credentials
 s3 = s3fs.S3FileSystem(
     key=os.getenv("AWS_ACCESS_KEY_ID"), secret=os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -19,7 +23,7 @@ output_dir = "s3://cohere-embeddings/wikipedia-2023-11-embed-multilingual-v3"
 # Load the dataset in streaming mode
 dataset = load_dataset(
     "Cohere/wikipedia-2023-11-embed-multilingual-v3",
-    "en",
+    "it",
     split="train",
     streaming=True,
 )
