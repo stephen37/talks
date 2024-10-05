@@ -13,6 +13,7 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -96,10 +97,7 @@ public class _02_Advanced_RAG_with_Query_Routing_Example {
                 .minScore(0.6)
                 .build();
 
-        ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
-                .build();
+        ChatLanguageModel chatLanguageModel = Utils.createOllamaChatModel();
 
         // Let's create a query router.
         Map<ContentRetriever, String> retrieverToDescription = new HashMap<>();
