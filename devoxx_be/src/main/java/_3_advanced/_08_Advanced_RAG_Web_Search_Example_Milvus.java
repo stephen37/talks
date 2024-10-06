@@ -11,6 +11,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
@@ -28,7 +29,10 @@ import dev.langchain4j.web.search.tavily.TavilyWebSearchEngine;
 import shared.Assistant;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.time.Duration;
+
 
 import static dev.langchain4j.data.document.loader.FileSystemDocumentLoader.loadDocument;
 import static shared.Utils.*;
@@ -41,10 +45,18 @@ public class _08_Advanced_RAG_Web_Search_Example_Milvus {
     }
 
     private static Assistant createAssistant() {
-        EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
+        // EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
+        EmbeddingModel embeddingModel = createLocalEmbeddingModel();
+        
 
-        EmbeddingStore<TextSegment> embeddingStore =
-                embed(toPath("documents/miles-of-smiles-terms-of-use.txt"), embeddingModel);
+        EmbeddingStore<TextSegment> embeddingStore = createMilvusEmbeddingStore();
+        List<String> documentPaths = List.of(
+            "documents/miles-of-smiles-terms-of-use.txt",
+            "documents/biography-of-john-doe.txt"
+        );
+
+        embedMultipleDocuments(documentPaths, embeddingModel, embeddingStore);
+
 
         ContentRetriever embeddingStoreContentRetriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(embeddingStore)
@@ -83,16 +95,38 @@ public class _08_Advanced_RAG_Web_Search_Example_Milvus {
         return MilvusEmbeddingStore.builder()
                 .host("localhost")
                 .port(19530)
-                .collectionName("miles_of_smiles_embeddings")
+                .collectionName("rag_demo")
                 .dimension(384)
                 .build();
+    }
+
+    private static EmbeddingModel createLocalEmbeddingModel() {
+        return HuggingFaceEmbeddingModel.builder()
+                .accessToken(System.getenv("HF_API_KEY"))
+                .modelId("sentence-transformers/all-MiniLM-L6-v2")
+                .waitForModel(true)
+                .timeout(Duration.ofSeconds(60))
+                // .cacheDirectory(cacheDir)
+                .build();
+    }
+    
+    private static void embedMultipleDocuments(List<String> documentPaths, EmbeddingModel embeddingModel, EmbeddingStore<TextSegment> embeddingStore) {
+        DocumentParser documentParser = new TextDocumentParser();
+        DocumentSplitter splitter = DocumentSplitters.recursive(300, 50);
+
+        for (String path : documentPaths) {
+            Document document = loadDocument(toPath(path), documentParser);
+            List<TextSegment> segments = splitter.split(document);
+            List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
+            embeddingStore.addAll(embeddings, segments);
+        }
     }
 
     private static EmbeddingStore<TextSegment> embed(Path documentPath, EmbeddingModel embeddingModel) {
         DocumentParser documentParser = new TextDocumentParser();
         Document document = loadDocument(documentPath, documentParser);
 
-        DocumentSplitter splitter = DocumentSplitters.recursive(300, 0);
+        DocumentSplitter splitter = DocumentSplitters.recursive(300, 50);
         List<TextSegment> segments = splitter.split(document);
 
         List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
