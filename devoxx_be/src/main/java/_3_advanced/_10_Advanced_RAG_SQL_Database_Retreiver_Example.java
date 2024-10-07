@@ -5,6 +5,7 @@ import dev.langchain4j.experimental.rag.content.retriever.sql.SqlDatabaseContent
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import org.h2.jdbcx.JdbcDataSource;
@@ -53,10 +54,11 @@ public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
 
         DataSource dataSource = createDataSource();
 
-        ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
+        ChatLanguageModel chatLanguageModel = OllamaChatModel.builder()
+                .baseUrl(OLLAMA_BASE_URL)
+                .modelName("llama3.2")
                 .build();
+
 
         ContentRetriever contentRetriever = SqlDatabaseContentRetriever.builder()
                 .dataSource(dataSource)

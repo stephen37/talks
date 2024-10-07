@@ -13,6 +13,7 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
@@ -29,8 +30,8 @@ import java.util.Scanner;
 
 import static dev.langchain4j.data.document.loader.FileSystemDocumentLoader.loadDocument;
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
-import static shared.Utils.OPENAI_API_KEY;
 import static shared.Utils.toPath;
+import static shared.Utils.OLLAMA_BASE_URL;
 
 public class _09_Advanced_RAG_Return_Sources_Example {
 
@@ -90,9 +91,9 @@ public class _09_Advanced_RAG_Return_Sources_Example {
                 .minScore(0.6)
                 .build();
 
-        ChatLanguageModel chatModel = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
+        ChatLanguageModel chatModel = OllamaChatModel.builder()
+                .baseUrl(OLLAMA_BASE_URL)
+                .modelName("llama3.2")
                 .build();
 
         return AiServices.builder(Assistant.class)

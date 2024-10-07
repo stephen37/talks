@@ -97,7 +97,7 @@ public class _02_Advanced_RAG_with_Query_Routing_Example {
                 .minScore(0.6)
                 .build();
 
-        ChatLanguageModel chatLanguageModel = Utils.createOllamaChatModel();
+        ChatLanguageModel chatLanguageModel = getLanguageModel();
 
         // Let's create a query router.
         Map<ContentRetriever, String> retrieverToDescription = new HashMap<>();

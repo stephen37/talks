@@ -13,6 +13,7 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -80,9 +81,9 @@ public class _07_Advanced_RAG_Multiple_Retrievers_Example {
                 .queryRouter(queryRouter)
                 .build();
 
-        ChatLanguageModel model = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
+        ChatLanguageModel model = OllamaChatModel.builder()
+                .baseUrl(OLLAMA_BASE_URL)
+                .modelName("llama3.2")
                 .build();
 
         return AiServices.builder(Assistant.class)

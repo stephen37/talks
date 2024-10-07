@@ -16,6 +16,7 @@ import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15Quantize
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -87,9 +88,9 @@ public class _06_Advanced_RAG_Skip_Retrieval_Example {
                 .minScore(0.6)
                 .build();
 
-        ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
+        ChatLanguageModel chatLanguageModel = OllamaChatModel.builder()
+                .baseUrl(OLLAMA_BASE_URL)
+                .modelName("llama3.2") 
                 .build();
 
         // Let's create a query router.

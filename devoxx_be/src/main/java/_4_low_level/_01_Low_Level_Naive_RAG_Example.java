@@ -14,6 +14,7 @@ import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15Quantize
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiTokenizer;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -27,8 +28,8 @@ import java.util.Map;
 import static dev.langchain4j.data.document.loader.FileSystemDocumentLoader.loadDocument;
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
 import static java.util.stream.Collectors.joining;
-import static shared.Utils.OPENAI_API_KEY;
 import static shared.Utils.toPath;
+import static shared.Utils.OLLAMA_BASE_URL;
 
 public class _01_Low_Level_Naive_RAG_Example {
 
@@ -93,10 +94,9 @@ public class _01_Low_Level_Naive_RAG_Example {
         Prompt prompt = promptTemplate.apply(variables);
 
         // Send the prompt to the OpenAI chat model
-        ChatLanguageModel chatModel = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
-                .timeout(Duration.ofSeconds(60))
+        ChatLanguageModel chatModel = OllamaChatModel.builder()
+                .baseUrl(OLLAMA_BASE_URL)
+                .modelName("llama3.2")
                 .build();
         AiMessage aiMessage = chatModel.generate(prompt.toUserMessage()).content();
 
