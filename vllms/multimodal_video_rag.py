@@ -200,33 +200,6 @@ def process_query_with_multiple_images(query_str, context_str, metadata_str, ima
     combined_response = "\n\n".join(responses)
     return combined_response
 
-# def main():
-#     video_url = "https://www.youtube.com/watch?v=d_qvLDhkg00"
-#     output_video_path = "./video_data/"
-#     output_folder = "./mixed_data/"
-#     output_audio_path = "./mixed_data/output_audio.wav"
-
-#     metadata = process_video(video_url, output_video_path, output_folder, output_audio_path)
-    
-#     index = create_index(output_folder)
-#     retriever_engine = index.as_retriever(similarity_top_k=5, image_similarity_top_k=5)
-#     query_str = "Using examples from video, explain all things covered in the video regarding the gaussian function"
-#     img, txt = retrieve(retriever_engine=retriever_engine, query_str=query_str)
-#     image_documents = SimpleDirectoryReader(
-#         input_dir=output_folder, input_files=img
-#     ).load_data()
-#     context_str = "".join(txt)
-
-#     metadata_str = json.dumps(metadata)
-
-#     response = process_query_with_multiple_images(
-#         query_str, context_str, metadata_str, image_documents
-#     )
-#     print("Combined response from all images:")
-#     print(response)
-
-# if __name__ == "__main__":
-#     main()
 
 def main():
     st.title("MultiModal RAG with Pixtral & Milvus")

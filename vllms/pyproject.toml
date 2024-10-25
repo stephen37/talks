@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "vlms-demos"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+jupyterlab = "^4.2.5"
+streamlit = "^1.39.0"
+openai = "^1.52.0"
+python-dotenv = "^1.0.1"
+llama-index = "^0.11.19"
+moviepy = "^1.0.3"
+pytube = "^15.0.0"
+requests = "^2.32.3"
+pymilvus = "^2.4.8"
+mistralai = "^1.1.0"
+llama-index-vector-stores-milvus = "^0.2.7"
+llama-index-multi-modal-llms-mistralai = "^0.2"
+llama-index-embeddings-mistralai = "^0.2.0"
+llama-index-multi-modal-llms-openai = "^0.2.2"
+llama-index-embeddings-clip = "^0.2.0"
+openai-whisper = "^20240930"
+ftfy = "^6.3.0"
+regex = "^2024.9.11"
+tqdm = "^4.66.5"
+clip = {git = "https://github.com/openai/CLIP.git"}
+matplotlib = "^3.9.2"
+scikit-image = "^0.24.0"
+pydub = "^0.25.1"
+ffmpeg-python = "^0.2.0"
+soundfile = "^0.12.1"
+speechrecognition = "^3.11.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
