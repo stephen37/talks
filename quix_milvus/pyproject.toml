@@ -1,0 +1,20 @@
+[project]
+name = "quix-milvus"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain-huggingface>=0.1.2",
+    "langchain>=0.3.17",
+    "pymilvus>=2.5.4",
+    "quixstreams>=3.8.0",
+    "regex>=2024.11.6",
+    "tqdm>=4.67.1",
+    "wikipedia-api>=0.8.1",
+    "langchain-core>=0.3.34",
+    "langchain-text-splitters>=0.3.6",
+    "langchain-milvus>=0.1.8",
+    "json-repair>=0.35.0",
+    "langchain-community>=0.3.16",
+]
