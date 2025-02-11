@@ -1,5 +1,7 @@
 # Streaming RAG with Milvus, Quix, and Mistral
 
+![Streaming RAG Demo](Streaming_RAG_Demo_LangChain.png)
+
 This repository demonstrates a real-time Retrieval-Augmented Generation (RAG) system that combines:
 - Vector search with Milvus
 - Streaming data with Quix (Kafka)
