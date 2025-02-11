@@ -17,4 +17,5 @@ dependencies = [
     "langchain-milvus>=0.1.8",
     "json-repair>=0.35.0",
     "langchain-community>=0.3.16",
+    "ipykernel>=6.29.5",
 ]

@@ -1,35 +1,50 @@
-import quixstreams as qx
+from quixstreams.kafka import Producer
 import json
 import time
-from datetime import datetime
 
-def run_producer(topic: str = "simpsons", broker: str = "localhost:29092"):
-    """Simple producer that sends Simpsons questions"""
-    client = qx.KafkaStreamingClient(broker)
-    producer = client.get_topic_producer(topic)
-    
-    questions = [
-        "How has the animation style changed?",
-        "What happened to key characters?",
-        "How has the humor evolved?",
-        "What are the biggest changes in recent seasons?",
-    ]
-    
-    try:
-        while True:
-            for q in questions:
-                data = {
-                    "timestamp": datetime.now().isoformat(),
-                    "question": q
-                }
-                producer.get_or_create_stream().parameters \
-                    .buffer.add_timestamp(datetime.now()) \
-                    .add_value("data", json.dumps(data)) \
-                    .write()
-                print(f"Sent: {q}")
-                time.sleep(2)
-    except KeyboardInterrupt:
-        print("Stopping...")
+# First, send some context messages
+messages = [
+    {"chat_id": "id1", "text": "The latest developments in artificial intelligence have revolutionized how we approach problem solving", "is_question": False},
+    {"chat_id": "id2", "text": "Climate change poses significant challenges to global ecosystems and human societies", "is_question": False},
+    {"chat_id": "id3", "text": "Quantum computing promises to transform cryptography and drug discovery", "is_question": False},
+    {"chat_id": "id4", "text": "Sustainable energy solutions are crucial for addressing environmental concerns", "is_question": False},
+]
+
+# Then, send some questions
+questions = [
+    {"chat_id": "q1", "text": "What are the main impacts of climate change?", "is_question": True},
+    {"chat_id": "q2", "text": "How is AI changing problem solving?", "is_question": True},
+    {"chat_id": "q3", "text": "What are the applications of quantum computing?", "is_question": True},
+]
+
+def main():
+    with Producer(
+        broker_address="localhost:29092", 
+        extra_config={
+            "allow.auto.create.topics": "true",
+        },
+    ) as producer:
+        # First send context messages
+        print("\nSending context messages...")
+        for message in messages:
+            print(f'Sending: "{message["text"]}"')
+            producer.produce(
+                topic="messages",
+                key=message["chat_id"].encode(),
+                value=json.dumps(message).encode(),
+            )
+            time.sleep(1)  # Wait for processing
+            
+        # Then send questions
+        print("\nSending questions...")
+        for question in questions:
+            print(f'Sending question: "{question["text"]}"')
+            producer.produce(
+                topic="messages",
+                key=question["chat_id"].encode(),
+                value=json.dumps(question).encode(),
+            )
+            time.sleep(2)  # Give more time for RAG processing
 
 if __name__ == "__main__":
-    run_producer() 
+    main()
