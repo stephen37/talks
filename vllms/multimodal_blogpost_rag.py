@@ -16,9 +16,21 @@ import streamlit as st
 load_dotenv()
 Settings.embed_model = MistralAIEmbedding("mistral-embed", api_key=os.getenv("MISTRAL_API_KEY"))
 
-def video_to_images(video_path: str, output_folder: str) -> None:
-    clip = VideoFileClip(video_path)
+def video_to_images(video_path: str, output_folder: str) -> str:
+    local_video_path = video_path
+    if video_path.startswith(('http://', 'https://')):
+        import yt_dlp
+        ydl_opts = {
+            'format': 'best',
+            'outtmpl': os.path.join(output_folder, 'video.mp4')
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_path])
+        local_video_path = os.path.join(output_folder, 'video.mp4')
+    
+    clip = VideoFileClip(local_video_path)
     clip.write_images_sequence(os.path.join(output_folder, "frame%04d.png"), fps=0.2)
+    return local_video_path
 
 def video_to_audio(video_path: str, output_audio_path: str) -> None:
     clip = VideoFileClip(video_path)
@@ -32,9 +44,15 @@ def audio_to_text(audio_path: str) -> str:
     return text
 
 def process_video(video_path: str, output_folder: str, output_audio_path: str) -> dict:
+    # Clean up existing files
+    if os.path.exists(output_folder):
+        import shutil
+        shutil.rmtree(output_folder)
     Path(output_folder).mkdir(parents=True, exist_ok=True)
-    video_to_images(video_path, output_folder)
-    video_to_audio(video_path, output_audio_path)
+
+
+    local_video_path = video_to_images(video_path, output_folder)
+    video_to_audio(local_video_path, output_audio_path)
     text_data = audio_to_text(output_audio_path)
     with open(os.path.join(output_folder, "output_text.txt"), "w") as file:
         file.write(text_data)
@@ -46,7 +64,7 @@ def create_index(output_folder: str) -> MultiModalVectorStoreIndex:
     image_store = MilvusVectorStore(uri="http://127.0.0.1:19530", collection_name="image_collection", overwrite=True, dim=512)
     storage_context = StorageContext.from_defaults(vector_store=text_store, image_store=image_store)
     documents = SimpleDirectoryReader(output_folder).load_data()
-    return MultiModalVectorStoreIndex.from_documents(documents, storage_context=storage_context)
+    return MultiModalVectorStoreIndex.from_documents(documents, storage_context=storage_context, show_progress=True)
 
 def retrieve(retriever_engine, query_str) -> tuple[list[str], list[str]]:
     retrieval_results = retriever_engine.retrieve(query_str)
@@ -71,11 +89,11 @@ def process_query_with_image(query_str, context_str, metadata_str, image_documen
         }
     ]
     
-    completion = client.chat.completions.create(model="mistralai/Pixtral-12B-2409", messages=messages, max_tokens=300)
+    completion = client.chat.completions.create(model="mistralai/Pixtral-12B-2409", messages=messages, max_tokens=1000)
     return completion.choices[0].message.content
 
 def main():
-    st.title("MultiModal RAG with Pixtral & Milvus")
+    st.title("Multimodal RAG with Pixtral & Milvus")
     
     if 'index' not in st.session_state:
         st.session_state.index = None
