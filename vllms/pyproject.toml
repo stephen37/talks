@@ -33,6 +33,7 @@ pydub = "^0.25.1"
 ffmpeg-python = "^0.2.0"
 soundfile = "^0.12.1"
 speechrecognition = "^3.11.0"
+yt-dlp = "^2025.1.26"
 
 
 [tool.poetry.group.dev.dependencies]
