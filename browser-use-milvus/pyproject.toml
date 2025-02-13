@@ -1,0 +1,12 @@
+[project]
+name = "browser-use-milvus"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "browser-use>=0.1.37",
+    "langchain-google-genai>=2.0.8",
+    "pymilvus>=2.5.4",
+    "sentence-transformers>=3.4.1",
+]

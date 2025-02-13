@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Scraper Chat</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .chat-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        #chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background: #007AFF;
+            color: white;
+            margin-left: 20%;
+        }
+        .bot-message {
+            background: #E9ECEF;
+            margin-right: 20%;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .scrape-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>Web Scraper Chat</h1>
+        <div id="chat-messages"></div>
+        <div class="input-container">
+            <input type="text" id="chat-input" placeholder="Ask a question...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    
+    <div class="scrape-container">
+        <h2>Scrape New Content</h2>
+        <div class="input-container">
+            <input type="text" id="scrape-input" placeholder="Enter scraping task...">
+            <button onclick="scrapeWebsite()">Scrape</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const scrapeInput = document.getElementById('scrape-input');
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            chatInput.value = '';
+
+            try {
+                const response = await fetch('http://localhost:8000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: message }),
+                });
+                const data = await response.json();
+                addMessage(data.response, false);
+            } catch (error) {
+                addMessage('Error: ' + error.message, false);
+            }
+        }
+
+        async function scrapeWebsite() {
+            const task = scrapeInput.value.trim();
+            if (!task) return;
+
+            try {
+                const response = await fetch('http://localhost:8000/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ task: task }),
+                });
+                const data = await response.json();
+                addMessage(`Scraping completed: ${JSON.stringify(data)}`, false);
+                scrapeInput.value = '';
+            } catch (error) {
+                addMessage('Error: ' + error.message, false);
+            }
+        }
+
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        scrapeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') scrapeWebsite();
+        });
+    </script>
+</body>
+</html> 
