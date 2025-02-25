@@ -18,7 +18,7 @@ The demo shows how to:
 ## Requirements
 
 - Python 3.11+
-- Docker (for Milvus and Kafka)
+- Docker & Docker Compose (for Milvus and Kafka)
 - Ollama
 - uv (install with `pip install uv`)
 
@@ -35,9 +35,9 @@ source .venv/bin/activate
 docker-compose up -d
 ```
 
-3. Make sure you have downloaded the `mistral-small` model, you can do this by running:
+3. Make sure you have downloaded the `mistral` model, you can do this by running:
 ```bash
-ollama pull mistral-small
+ollama pull mistral
 ```
 
 4. Open and run the Jupyter notebook:
