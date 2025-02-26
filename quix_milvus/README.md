@@ -40,7 +40,12 @@ docker compose up -d
 ollama pull mistral
 ```
 
-4. Open and run the Jupyter notebook:
+4. If you already have the `mistral` model, run it:
+```bash
+ollama run mistral
+```
+
+5. Open and run the Jupyter notebook:
 ```bash
 jupyter notebook RAG_Streaming_Demo.ipynb
 ```
