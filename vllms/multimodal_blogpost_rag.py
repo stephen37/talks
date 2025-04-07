@@ -53,11 +53,11 @@ def audio_to_text(audio_path: str) -> str:
 
 def process_video(video_path: str, output_folder: str, output_audio_path: str) -> dict:
     # Clean up existing files
-    if os.path.exists(output_folder):
-        import shutil
+    # if os.path.exists(output_folder):
+    #     import shutil
 
-        shutil.rmtree(output_folder)
-    Path(output_folder).mkdir(parents=True, exist_ok=True)
+    #     shutil.rmtree(output_folder)
+    # Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     local_video_path = video_to_images(video_path, output_folder)
     video_to_audio(local_video_path, output_audio_path)
@@ -65,20 +65,25 @@ def process_video(video_path: str, output_folder: str, output_audio_path: str) -
     with open(os.path.join(output_folder, "output_text.txt"), "w") as file:
         file.write(text_data)
     os.remove(output_audio_path)
-    return {"Author": "Example Author", "Title": "Example Title", "Views": "1000000"}
+
+    return {
+        "Author": "3blue1brown",
+        "Title": "Backpropagation, step-by-step | DL3",
+        "Views": 5067011,
+    }
 
 
 def create_index(output_folder: str) -> MultiModalVectorStoreIndex:
     text_store = MilvusVectorStore(
         uri="http://127.0.0.1:19530",
         collection_name="text_collection",
-        overwrite=True,
+        overwrite=False,
         dim=1024,
     )
     image_store = MilvusVectorStore(
         uri="http://127.0.0.1:19530",
         collection_name="image_collection",
-        overwrite=True,
+        overwrite=False,
         dim=512,
     )
     storage_context = StorageContext.from_defaults(
@@ -142,69 +147,168 @@ def process_query_with_image(
     return completion.choices[0].message.content
 
 
+def load_existing_index() -> MultiModalVectorStoreIndex | None:
+    """Loads an existing index from Milvus."""
+    try:
+        st.info("Connecting to Milvus and attempting to load index collections...")
+        text_store = MilvusVectorStore(
+            uri="http://127.0.0.1:19530",
+            collection_name="text_collection",
+            overwrite=False,  # Important: Don't overwrite
+            dim=1024,
+        )
+        image_store = MilvusVectorStore(
+            uri="http://127.0.0.1:19530",
+            collection_name="image_collection",
+            overwrite=False,  # Important: Don't overwrite
+            dim=512,
+        )
+        storage_context = StorageContext.from_defaults(
+            vector_store=text_store, image_store=image_store
+        )
+        # Instantiate the index object using the existing storage context
+        # Pass an empty list for documents as we are not building from source
+        index = MultiModalVectorStoreIndex([], storage_context=storage_context)
+
+        # Perform a simple check to ensure retriever can be created
+        _ = index.as_retriever(similarity_top_k=1, image_similarity_top_k=1)
+        st.info("Index components loaded successfully.")
+        return index
+    except Exception as e:
+        st.error(f"Error loading existing index: {e}")
+        st.warning(
+            "Ensure Milvus is running and the collections 'text_collection' and 'image_collection' exist."
+        )
+        return None
+
+
 def main():
     st.title("Multimodal RAG with Pixtral & Milvus")
 
     if "index" not in st.session_state:
         st.session_state.index = None
         st.session_state.retriever_engine = None
-        st.session_state.metadata = None
+        st.session_state.metadata = None # Assuming metadata might be stored/retrieved elsewhere if not processing video
 
-    video_path = st.text_input("Enter video path:")
+    build_index_from_video = st.checkbox("Build index from new video?", value=False)
+    video_path = st.text_input("Enter video path (required if building index):")
 
-    if video_path and not st.session_state.index:
-        output_folder = "./mixed_data/"
-        output_audio_path = "./mixed_data/output_audio.wav"
+    # Logic to build or load index
+    if build_index_from_video:
+        if video_path:
+            if st.button("Process Video and Build Index"):
+                output_folder = "./mixed_data/"
+                output_audio_path = "./mixed_data/output_audio.wav"
 
-        with st.spinner("Processing video..."):
-            st.session_state.metadata = process_video(
-                video_path, output_folder, output_audio_path
-            )
+                with st.spinner("Processing video..."):
+                    # For demo purposes, let's keep the dummy metadata generation
+                    st.session_state.metadata = process_video(
+                        video_path, output_folder, output_audio_path
+                    )
+                with st.spinner("Creating index..."):
+                    st.session_state.index = create_index(output_folder)
+                    st.session_state.retriever_engine = st.session_state.index.as_retriever(
+                        similarity_top_k=5, image_similarity_top_k=5
+                    )
+                st.success("Video processed and index created!")
+        else:
+            st.warning("Please enter a video path if you want to build a new index.")
+    elif not st.session_state.index: # Attempt to load existing index if not building and index not already loaded
+        if st.button("Load Existing Index from Milvus"):
+             with st.spinner("Attempting to load existing index..."):
+                st.session_state.index = load_existing_index()
+                if st.session_state.index:
+                     st.session_state.retriever_engine = st.session_state.index.as_retriever(
+                        similarity_top_k=5, image_similarity_top_k=5
+                    )
+                     # You might want to load/set metadata here if it's relevant for queries
+                     # For demo, setting dummy metadata if index loaded successfully
+                     # Let's use the same dummy data structure as process_video for consistency
+                     st.session_state.metadata = {
+                         "Author": "Loaded Index",
+                         "Title": "Unknown (Loaded)",
+                         "Views": 0,
+                     }
+                     st.success("Existing index loaded!")
+                else:
+                    st.error("Failed to load existing index. Check Milvus connection and collection status.")
 
-        with st.spinner("Creating index..."):
-            st.session_state.index = create_index(output_folder)
-            st.session_state.retriever_engine = st.session_state.index.as_retriever(
-                similarity_top_k=5, image_similarity_top_k=5
-            )
 
-        st.success("Video processed and index created!")
-
-    if st.session_state.index:
-        st.subheader("Chat with the Video")
-        query = st.text_input("Ask a question about the video:")
+    # Chat interface - only show if index is loaded/created
+    if st.session_state.index and st.session_state.retriever_engine:
+        st.subheader("Chat with the Video Index")
+        query = st.text_input("Ask a question:")
 
         if query:
             with st.spinner("Generating response..."):
-                img, txt = retrieve(
+                # Assume metadata is available (loaded or from processing)
+                if not st.session_state.metadata:
+                     st.warning("Metadata not available for context.")
+                     metadata_str = "{}" # Default empty metadata
+                else:
+                     metadata_str = json.dumps(st.session_state.metadata)
+
+                img_paths, txt_snippets = retrieve(
                     retriever_engine=st.session_state.retriever_engine, query_str=query
                 )
-                image_documents = SimpleDirectoryReader(
-                    input_dir="./mixed_data/", input_files=img
-                ).load_data()
-                context_str = "".join(txt)
-                metadata_str = json.dumps(st.session_state.metadata)
 
-                response = process_query_with_image(
-                    query, context_str, metadata_str, image_documents[0]
-                )
-                st.write("Response:", response)
+                # Handle case where no images are retrieved
+                image_document = None
+                image_to_display_path = None # Keep track of which image path is used
+                if img_paths:
+                     # Need to load the actual ImageDocument for processing
+                     # Assuming images are stored locally relative to where the script runs
+                     # or accessible via the path stored in metadata. Adjust as needed.
+                     try:
+                        # Use the first retrieved image path.
+                        # We assume the path stored in metadata is correct and accessible.
+                        # For the demo, it's likely relative like './mixed_data/framexxxx.png'
+                        first_img_path = img_paths[0]
 
-                # Display the images used in the explanation
-                st.subheader("Relevant Images:")
-                cols = st.columns(
-                    min(3, len(image_documents))
-                )  # Create up to 3 columns
-                for idx, image_doc in enumerate(image_documents):
-                    with cols[idx % 3]:
-                        st.image(
-                            image_doc.image_path,
-                            caption=f"Image {idx + 1}",
-                            use_column_width=True,
-                        )
-    elif video_path:
-        st.info("Processing video and creating index. Please wait...")
-    else:
-        st.info("Please enter a video path to begin.")
+                        # Ensure the path exists before trying to load
+                        if os.path.exists(first_img_path):
+                            image_documents = SimpleDirectoryReader(
+                                input_files=[first_img_path]
+                             ).load_data()
+
+                            if image_documents:
+                                 image_document = image_documents[0]
+                                 image_to_display_path = first_img_path # Store path for display
+                        else:
+                             st.warning(f"Retrieved image path not found: {first_img_path}")
+
+                     except Exception as e:
+                         st.error(f"Error loading retrieved image: {e}")
+
+
+                context_str = "\\n".join(txt_snippets) # Join text snippets for context
+
+                if image_document: # Only call Pixtral if an image was successfully loaded
+                    response = process_query_with_image(
+                        query, context_str, metadata_str, image_document
+                    )
+                    st.write("Response:", response)
+
+                    # Display the specific image used for the query
+                    st.subheader("Image Context:")
+                    st.image(
+                        image_to_display_path, # Use the stored path
+                        caption=f"Used Image: {os.path.basename(image_to_display_path)}",
+                        use_container_width=True,
+                    )
+                else: # Fallback or indicate no image context was used
+                    st.warning("No relevant image found or loaded for this query. Answering based on text context only.")
+                    # Optionally, you could have a text-only processing function here
+                    # For now, just display the text context
+                    st.write("Retrieved Text Context:", context_str)
+
+
+    elif build_index_from_video and video_path:
+        st.info("Click 'Process Video and Build Index' to start.")
+    elif not build_index_from_video:
+         st.info("Click 'Load Existing Index from Milvus' or check the box above to build a new one.")
+    # Removed the redundant 'else' block which could cause confusion.
+    # The default state (no option clicked yet) is covered by the st.info messages above.
 
 
 if __name__ == "__main__":
